@@ -27,7 +27,7 @@ import java.util.ArrayList;
 
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Main extends JFrame {
 
@@ -36,8 +36,8 @@ public class Main extends JFrame {
 //    String port = "10007";
 //    String database = "defaultdb";
 //    String user = "avnadmin";//avnadmin
-//    String password = "AVNS_Z5VaWvb_pxjqBMtks36";//AVNS_Z5VaWvb_pxjqBMtks36
-//    //String url = "jdbc:mysql://avnadmin:AVNS_Z5VaWvb_pxjqBMtks36@mysql-26ea90b1-myatoothar5-1f5f.c.aivencloud.com:10007/project?ssl-mode=REQUIRED";
+    //    String password = "AVNS_Z5VaWvb_pxjqBMtks36";//AVNS_Z5VaWvb_pxjqBMtks36
+    //    //String url = "jdbc:mysql://avnadmin:AVNS_Z5VaWvb_pxjqBMtks36@mysql-26ea90b1-myatoothar5-1f5f.c.aivencloud.com:10007/project?ssl-mode=REQUIRED";
 //    String url = "jdbc:mysql://" + host + ":" + port + "/" + database + "?sslMode=REQUIRED";//aiven
 //    String url = "jdbc:mysql://localhost:3306/project_copy";//local
 //    String user = "root";
@@ -330,8 +330,6 @@ public class Main extends JFrame {
                 if (selectedBox != null && !selectedBox.equals("All")) {
                     sqlSelect = "SELECT * FROM booklist WHERE Category = '" + selectedBox + "'";
                 }
-
-
 
                 try(ResultSet resultSet = statement.executeQuery(sqlSelect)){
                     while(resultSet.next()) {
@@ -1330,6 +1328,7 @@ public class Main extends JFrame {
 
     }
 
+
     class ShowBorrow implements ActionListener{
         public void actionPerformed(ActionEvent e){
 
@@ -1734,6 +1733,12 @@ public class Main extends JFrame {
 
             });// end of bEdit
 
+
+
+
+
+            AtomicInteger selectedMemberID = new AtomicInteger();
+            AtomicInteger selectedBookID = new AtomicInteger();
             bBorrowEntry.addActionListener( be2 -> {
                 if (borrowEntryOpen) {
                     return;
@@ -1764,8 +1769,8 @@ public class Main extends JFrame {
                 JLabel dueDate = new JLabel("Due Date");
 
 
-                JTextField tbookId = new JTextField(20);
-                JTextField tmemberId = new JTextField(20);
+                //JTextField tbookId = new JTextField(20);
+                //JTextField tmemberId = new JTextField(20);
                 JTextField tborrowDate = new JTextField(20);
                 JTextField tdueDate = new JTextField(20);
 
@@ -1780,8 +1785,105 @@ public class Main extends JFrame {
                 JButton save = new JButton("Save");
                 JButton cancel = new JButton("Cancel");
                 JPanel pmain = new JPanel(new BorderLayout());
-                JPanel p1 = new JPanel(new GridLayout(5, 2));
+                JPanel p1 = new JPanel(new GridLayout(4, 2));
                 Font myFont = new Font("Roboto", Font.PLAIN, 20);
+
+                //this is getting the memberid from the membertable and try to insert into dropdown in borrow list
+                JComboBox<String> dropdown = new JComboBox<>();
+                ArrayList<Integer> memberids = new ArrayList<Integer>();
+                ArrayList<String> names = new ArrayList<String>();
+                String sqlSelectm = "select * from members";
+
+                try (Connection conn = DBConnection.getConnection();
+                     Statement statement = conn.createStatement()) {
+                    try (ResultSet resultSet = statement.executeQuery(sqlSelectm)) {
+                        while (resultSet.next()) {
+                            int memberid = resultSet.getInt(1);
+                            String membername = resultSet.getString(2);
+                            memberids.add(memberid);
+                            names.add(membername);
+//                            model.addRow(new Object[] {
+//                                    resultSet.getInt(1),
+//                                    resultSet.getString(2),
+//                                    resultSet.getString(3),
+//                                    resultSet.getString(4),
+//                                    resultSet.getString(5),
+//                                    resultSet.getString(6)
+//                            });
+                        }
+                    }
+                } catch (SQLException ex) {
+                    throw new RuntimeException(ex);
+                }
+                for (int i = 0; i < memberids.size(); i++) {
+                    String item = memberids.get(i) + " (" + names.get(i) + ")";
+                    dropdown.addItem(item);
+                }
+
+                dropdown.addActionListener(de -> {
+
+
+                    int selectedIndex = dropdown.getSelectedIndex();
+
+                    if (selectedIndex != -1) {
+                        selectedMemberID.set(memberids.get(selectedIndex));
+
+                        System.out.println(selectedMemberID.get());
+                    }
+                });
+
+
+                //this is getting the bookid from the booktable and try to insert into dropdown in borrow list
+                JComboBox<String> dropdownbook = new JComboBox<>();
+                ArrayList<Integer> bookids = new ArrayList<Integer>();
+                ArrayList<String> booknames = new ArrayList<String>();
+
+                String sqlSelectbook = "SELECT * FROM booklist";
+                try (Connection conn = DBConnection.getConnection();
+                     Statement statement = conn.createStatement()) {
+
+
+
+                    try (ResultSet resultSet = statement.executeQuery(sqlSelectbook)) {
+                        while (resultSet.next()) {
+                            int bookid = resultSet.getInt(1);
+                            String bookname = resultSet.getString(2);
+                            bookids.add(bookid);
+                            booknames.add(bookname);
+
+//                            model.addRow(new Object[]{
+//                                    resultSet.getInt(1),
+//                                    resultSet.getString(2),
+//                                    resultSet.getString(3),
+//                                    resultSet.getString(4),
+//                                    resultSet.getInt(5),
+//                                    resultSet.getString(6)
+//                            });
+                        }
+                    }
+                } catch (SQLException ex) {
+                    throw new RuntimeException(ex);
+                }
+                for (int i = 0; i < bookids.size(); i++) {
+                    String item = bookids.get(i) + " (" + booknames.get(i) + ")";
+                    dropdownbook.addItem(item);
+                }
+
+                dropdownbook.addActionListener(de -> {
+
+
+                    int selectedIndex = dropdownbook.getSelectedIndex();
+
+                    if (selectedIndex != -1) {
+                        selectedBookID.set(bookids.get(selectedIndex));
+
+                        System.out.println(selectedBookID.get());
+                    }
+                });
+
+
+                dropdown.setPreferredSize(new Dimension(200, 35));
+                dropdownbook.setPreferredSize(new Dimension(200, 35));
 
                 //setting labels fonts
                 bookId.setFont(myFont);
@@ -1799,10 +1901,10 @@ public class Main extends JFrame {
 
 
                 //setting size of text field box
-                tbookId.setPreferredSize(new Dimension(20, 30));
-                tmemberId.setPreferredSize(new Dimension(20, 30));
-                tborrowDate.setPreferredSize(new Dimension(20, 30));
-                tdueDate.setPreferredSize(new Dimension(20, 30));
+                //tbookId.setPreferredSize(new Dimension(15, 30));
+                //tmemberId.setPreferredSize(new Dimension(20, 30));
+                tborrowDate.setPreferredSize(new Dimension(200, 35));
+                tdueDate.setPreferredSize(new Dimension(200, 35));
 
 
                 // for alignment of label and text fields
@@ -1827,8 +1929,10 @@ public class Main extends JFrame {
                 JPanel ptp = new JPanel(layout);
                 //JPanel ptd = new JPanel(layout);
                 //adding text fields into aligned panels
-                ptb.add(tbookId);
-                pta.add(tmemberId);
+                //ptb.add(tbookId);
+                //pta.add(tmemberId);
+                ptb.add(dropdownbook);
+                pta.add(dropdown);
                 pty.add(tborrowDate);
                 ptp.add(tdueDate);
                 //ptd.add(treturnDate);
@@ -1859,7 +1963,7 @@ public class Main extends JFrame {
                 JPanel panel = new JPanel(new BorderLayout());
                 panel.add(p1, BorderLayout.CENTER);
                 panel.add(p2, BorderLayout.SOUTH);
-                add(panel);
+                borrowentry.add(panel);
 
                 // background color of main panel
                 Color bgcolor = new Color(240, 240, 240);
@@ -1877,14 +1981,18 @@ public class Main extends JFrame {
                 pty.setBackground(bgcolor);
                 ptp.setBackground(bgcolor);
 
+
+
+
+
                 save.addActionListener(se -> {
-                    String tbookIdText = tbookId.getText();
-                    String tmemberIdText = tmemberId.getText();
+                    Integer tbookIdText = selectedBookID.get();
+                    Integer tmemberIdText = selectedMemberID.get();
                     String tborrowDateText = tborrowDate.getText();
                     String tdueDateText = tdueDate.getText();
                     //String treturnDateText = treturnDate.getText();
 
-                    if(tbookIdText.equals("") || tmemberIdText.equals("") || tborrowDateText.equals("") || tdueDateText.equals("")) {
+                    if(tbookIdText == null || tmemberIdText == null || tborrowDateText.equals("") || tdueDateText.equals("")) {
                         JOptionPane.showMessageDialog(null, "You should input first!");
                     }else {
 
@@ -1892,15 +2000,15 @@ public class Main extends JFrame {
                         try (Connection conn = DBConnection.getConnection();
                              PreparedStatement pstatement = conn.prepareStatement(sqlInsert)) {
 
-                            pstatement.setString(1, tbookIdText);
-                            pstatement.setString(2, tmemberIdText);
+                            pstatement.setInt(1, tbookIdText);
+                            pstatement.setInt(2, tmemberIdText);
                             pstatement.setString(3, tborrowDateText);
                             pstatement.setString(4, tdueDateText);
 
                             pstatement.executeUpdate();
 
-                            tbookId.setText("");
-                            tmemberId.setText("");
+                            //tbookId.setText("");
+//                            tmemberId.setText("");
                             tborrowDate.setText("");
                             tdueDate.setText("");
 
@@ -1940,7 +2048,7 @@ public class Main extends JFrame {
                 borrowentry.add(pmain);
                 borrowentry.add(pmain);
                 borrowentry.setLocation(-3,200);
-                borrowentry.setSize(550,300);
+                borrowentry.setSize(530,300);
                 borrowentry.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
                 borrowentry.setVisible(true);
 
@@ -2500,7 +2608,7 @@ public class Main extends JFrame {
 
 
             // creating table for data outputs
-            String[] columns = {"User ID","User Name","Email","Phone","Role"};
+            String[] columns = {"Librarian ID","Librarian Name","Email","Phone","Role"};
             DefaultTableModel model = new DefaultTableModel(columns,0);
             JTable table = new JTable(model);
             table.setRowHeight(25);
@@ -3555,14 +3663,14 @@ public class Main extends JFrame {
     }
 
     public static void main(String[] args) {
-        LoginFrame frame = new LoginFrame();
-//        Main frame = new Main();
-//        frame.setTitle("Library Management System");
-//        frame.setSize(850, 700);
-//        frame.setResizable(false);
-//        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-//        frame.setLocationRelativeTo(null);
-//        frame.setVisible(true);
+//        LoginFrame frame = new LoginFrame();
+        Main frame = new Main();
+        frame.setTitle("Library Management System");
+        frame.setSize(850, 700);
+        frame.setResizable(false);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);
     }
 }
 //hello
